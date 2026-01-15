@@ -31,30 +31,23 @@ class EngineController:
         output_prefix_str = str(output_prefix).replace("\\", "/")
 
         content = [
-            "sv_cheats 1",           # Enable cheats for camera control
-            "cl_drawhud 0",          # Hide HUD
-            "r_drawviewmodel 0",     # Hide weapon models
-            "crosshair 0",           # Hide crosshair
-            "cl_drawhud 0",          # Hide HUD
-            "r_drawviewmodel 0",     # Hide weapon models
-            "crosshair 0",           # Hide crosshair
-            f"fov 90",               # 90 degrees FOV
+            "sv_cheats 1",
+            "cl_drawhud 0",
+            "r_drawviewmodel 0",
+            "crosshair 0",
+            f"fov 90",
             
-            # --- Manual Trigger (Improved Method from Cheat Sheet) ---
-            
-            # F8: START (Play Demo)
+            # F8: Play Demo
             f"bind F8 \"playdemo {cfg.DEMO_FILE}\"",
             
-            # F9: PREPARE (Unlock Constraints & Cheats)
-            # We set wide limits for pitch/yaw to allow full rotation.
-            "bind F9 \"sv_cheats 1; cl_drawhud 0; thirdperson; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
+            # F9: Prepare (Unlock & Enable Maya Mode)
+            "bind F9 \"sv_cheats 1; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
             
-            # F10: SETUP FACE (Go to Tick 1 & Set Angles)
-            # demo_gototick 1 -> Pause -> Set Cam -> Ready to Record
-            f"bind F10 \"demo_gototick 1; demo_pause; cam_idealdist 0; cam_ideallag 0; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; thirdperson\"",
+            # F10: Setup Face (Absolute World Coordinates)
+            f"bind F10 \"demo_gototick 1; demo_pause; sv_cheats 1; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180; cam_idealdist 0; cam_ideallag 0; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; thirdperson\"",
 
-            # F11: ACTION (Record)
-            f"bind F11 \"host_framerate {cfg.FRAMERATE}; startmovie {face_name} tga wav; demo_resume\""
+            # F11: Record
+            f"bind F11 \"thirdperson_mayamode 1; host_framerate {cfg.FRAMERATE}; startmovie {face_name} tga wav; demo_resume\""
         ]
         
         # Write the config file
