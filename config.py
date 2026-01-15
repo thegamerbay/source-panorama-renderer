@@ -16,7 +16,7 @@ class RenderConfig:
     GAME_EXE: Path = GAME_ROOT / "hl2.exe"
     
     # Mod directory (usually 'hl2' for Half-Life 2, 'cstrike' for CSS, etc.)
-    MOD_DIR: str = os.getenv("MOD_DIR", "hl2")
+    MOD_DIR: str = os.getenv("MOD_DIR", "hl2_complete")
     
     # --- RENDER SETTINGS ---
     # Name of the demo file WITHOUT .dem extension
@@ -32,7 +32,7 @@ class RenderConfig:
     # Resolution of ONE face of the cube.
     # 2048x2048 per face -> ~6K-8K equirectangular panorama
     # 3840x3840 per face -> very high quality 8K
-    CUBE_FACE_SIZE: int = int(os.getenv("CUBE_FACE_SIZE", "2048"))
+    CUBE_FACE_SIZE: int = int(os.getenv("CUBE_FACE_SIZE", "512"))
     
     # --- FFMPEG SETTINGS ---
     # Command to call ffmpeg (must be in PATH or full path here)

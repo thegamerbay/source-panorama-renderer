@@ -32,9 +32,10 @@ class EngineController:
 
         content = [
             "sv_cheats 1",           # Enable cheats for camera control
+            # "demo_quitafterplayback 1", # DISABLED for debugging
             "cl_drawhud 0",          # Hide HUD
             "r_drawviewmodel 0",     # Hide weapon models
-            "mat_postprocess_enable 0", # Disable post-processing (optional, for cleaner stitch)
+            # "mat_postprocess_enable 0", # Disable post-processing
             "crosshair 0",           # Hide crosshair
             f"host_framerate {cfg.FRAMERATE}", # Lock framerate for recording
             
@@ -43,18 +44,10 @@ class EngineController:
             f"setang {pitch} {yaw} {roll}", # Force camera angle
             
             # --- Recording ---
-            # 'startmovie' begins recording TGA sequences and a WAV file
-            # Format: startmovie <name> tga wav
             f"startmovie \"{output_prefix_str}\" tga wav", 
             
-            # Play the demo
-            # Note: playdemo might sometimes override viewpoint. 
-            # If setang fails, 'drive' or specific demo tools might be needed.
-            f"playdemo {cfg.DEMO_FILE}",
-            
-            # After demo finishes (or if we manually stop it), these run:
-            "endmovie",
-            "quit"
+            # --- Play Demo ---
+            # Using +playdemo launch arg instead
         ]
         
         # Write the config file
@@ -81,25 +74,20 @@ class EngineController:
         logger.info(f"--- Starting Render: {face_name} {angles} ---")
         
         # Launch Arguments
-        # -game: specifies the mod (hl2, episode1, etc)
-        # -console: enables console
-        # -novid: skips intro video
-        # -window -w -h: runs in windowed mode at specific resolution
-        # +exec: runs our generated config immediately
         cmd = [
             str(cfg.GAME_EXE),
-            "-game", cfg.MOD_DIR,
-            "-console",
+            "-game", cfg.MOD_DIR, # Force 'hl2_complete'
             "-novid",
-            "-window", "-w", str(cfg.CUBE_FACE_SIZE), "-h", str(cfg.CUBE_FACE_SIZE),
-            "+exec", cfg_file
+            "-window", "-w", "512", "-h", "512", # Force 512x512
+            "+exec", cfg_file,
+            "+playdemo", cfg.DEMO_FILE
         ]
 
         try:
             logger.info(f"Launching: {' '.join(cmd)}")
             # We wait for the process to finish. 
             # The game should auto-quit because of '+quit' in the cfg.
-            subprocess.run(cmd, check=True)
+            subprocess.run(cmd, check=True, cwd=cfg.GAME_ROOT)
             logger.info(f"Render complete for: {face_name}")
         except subprocess.CalledProcessError as e:
             logger.error(f"Game process failed for {face_name}: {e}")
