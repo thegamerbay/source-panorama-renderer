@@ -1,5 +1,8 @@
 # 🎮 Source Engine Panorama Renderer
 
+> [!CAUTION]
+> **WORK IN PROGRESS**: This project is currently in active development. Features may be unstable, and the workflow requires some manual intervention.
+
 > **Convert Half-Life 2 (and other Source) demos into immersive 8K 360° videos.**
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python)
@@ -91,9 +94,10 @@ python main.py
 ```
 
 ### The Process
-1.  **Render Phase**: The script will launch the game 6 times.
-    *   *Do not interact with the computer while the game window is active.*
-    *   The script uses `sv_cheats 1` to lock the camera angle for each face.
+1.  **Render Phase**: The script will launch the game 6 times (once for each face).
+    *   **IMPORTANT**: The automation requires you to **Manually Close the Game Window** after the demo playback has finished for each face. The script will wait until the window is closed to proceed to the next angle.
+    *   *Do not interact with the computer while the game window is active*, as keyboard inputs are simulated.
+    *   The script uses `sv_cheats 1` and `thirdperson` to lock the camera angle for each face.
 2.  **Stitch Phase**: FFmpeg will process the thousands of generated TGA images.
     *   This step uses your GPU (NVENC) for performance.
 3.  **Result**: The final video will be saved in the `output/` directory.
