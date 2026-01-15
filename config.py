@@ -32,7 +32,7 @@ class RenderConfig:
     # Resolution of ONE face of the cube.
     # 2048x2048 per face -> ~6K-8K equirectangular panorama
     # 3840x3840 per face -> very high quality 8K
-    CUBE_FACE_SIZE: int = int(os.getenv("CUBE_FACE_SIZE", "512"))
+    CUBE_FACE_SIZE: int = int(os.getenv("CUBE_FACE_SIZE", "2048"))
     
     # --- FFMPEG SETTINGS ---
     # Command to call ffmpeg (must be in PATH or full path here)
@@ -55,8 +55,13 @@ CUBE_FACES = {
     "right": (0, 270, 0),
     "back":  (0, 180, 0),
     "left":  (0, 90, 0),
-    "up":    (-90, 0, 0), 
-    "down":  (90, 0, 0)
+    # Fixed: Inverted pitch for Source Engine (Up is negative, but we passed negated in engine_control)
+    # We want final engine value: -90 for UP, 90 for DOWN.
+    # engine_control uses {-pitch}. 
+    # So for UP (-90 engine), we need input 90.
+    # So for DOWN (90 engine), we need input -90.
+    "up":    (90, 0, 0),   
+    "down":  (-90, 0, 0)
 }
 
 cfg = RenderConfig()

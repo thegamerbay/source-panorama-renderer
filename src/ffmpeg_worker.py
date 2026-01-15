@@ -33,13 +33,11 @@ class FFmpegStitcher:
         missing_files = False
         
         for face in order:
-            # Pattern matching: Name_%04d.tga
-            # Note: Source Engine might produce 'name0000.tga' (no underscore) if we didn't include it in startmovie
-            # In engine_control.py we defined output as f"{face_name}_" so it should be "face_0000.tga"
-            input_pattern = cfg.TEMP_DIR / f"{face}_%04d.tga"
+            # Pattern matching: Name%04d.tga (e.g. front0001.tga)
+            input_pattern = cfg.TEMP_DIR / f"{face}%04d.tga"
             
             # Simple check if any file exists for this face
-            glob_pattern = f"{face}_*.tga"
+            glob_pattern = f"{face}*.tga"
             if not list(cfg.TEMP_DIR.glob(glob_pattern)):
                 logger.error(f"Missing frames for face: {face}")
                 missing_files = True
@@ -52,9 +50,9 @@ class FFmpegStitcher:
 
         # 2. Gather Audio Input
         # Source Engine records a WAV file for each 'startmovie' session.
-        # Format: face_.wav (because we used 'face_' as name)
+        # Format: face.wav
         # All 6 executions produce the same audio, so we just pick 'front'
-        audio_path = cfg.TEMP_DIR / "front_.wav"
+        audio_path = cfg.TEMP_DIR / "front.wav"
         has_audio = False
         
         if audio_path.exists():

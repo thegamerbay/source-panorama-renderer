@@ -32,22 +32,29 @@ class EngineController:
 
         content = [
             "sv_cheats 1",           # Enable cheats for camera control
-            # "demo_quitafterplayback 1", # DISABLED for debugging
             "cl_drawhud 0",          # Hide HUD
             "r_drawviewmodel 0",     # Hide weapon models
-            # "mat_postprocess_enable 0", # Disable post-processing
             "crosshair 0",           # Hide crosshair
-            f"host_framerate {cfg.FRAMERATE}", # Lock framerate for recording
+            "cl_drawhud 0",          # Hide HUD
+            "r_drawviewmodel 0",     # Hide weapon models
+            "crosshair 0",           # Hide crosshair
+            f"fov 90",               # 90 degrees FOV
             
-            # --- Camera Control ---
-            f"fov 90",               # 90 degrees FOV is required for correct cubemap face
-            f"setang {pitch} {yaw} {roll}", # Force camera angle
+            # --- Manual Trigger (Improved Method from Cheat Sheet) ---
             
-            # --- Recording ---
-            f"startmovie \"{output_prefix_str}\" tga wav", 
+            # F8: START (Play Demo)
+            f"bind F8 \"playdemo {cfg.DEMO_FILE}\"",
             
-            # --- Play Demo ---
-            # Using +playdemo launch arg instead
+            # F9: PREPARE (Unlock Constraints & Cheats)
+            # We set wide limits for pitch/yaw to allow full rotation.
+            "bind F9 \"sv_cheats 1; cl_drawhud 0; thirdperson; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
+            
+            # F10: SETUP FACE (Go to Tick 1 & Set Angles)
+            # demo_gototick 1 -> Pause -> Set Cam -> Ready to Record
+            f"bind F10 \"demo_gototick 1; demo_pause; cam_idealdist 0; cam_ideallag 0; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; thirdperson\"",
+
+            # F11: ACTION (Record)
+            f"bind F11 \"host_framerate {cfg.FRAMERATE}; startmovie {face_name} tga wav; demo_resume\""
         ]
         
         # Write the config file
@@ -78,18 +85,87 @@ class EngineController:
             str(cfg.GAME_EXE),
             "-game", cfg.MOD_DIR, # Force 'hl2_complete'
             "-novid",
-            "-window", "-w", "512", "-h", "512", # Force 512x512
-            "+exec", cfg_file,
-            "+playdemo", cfg.DEMO_FILE
+            "-window", "-w", str(cfg.CUBE_FACE_SIZE), "-h", str(cfg.CUBE_FACE_SIZE),
+            "+exec", cfg_file
         ]
 
         try:
             logger.info(f"Launching: {' '.join(cmd)}")
-            # We wait for the process to finish. 
-            # The game should auto-quit because of '+quit' in the cfg.
-            subprocess.run(cmd, check=True, cwd=cfg.GAME_ROOT)
+            
+            # Launch game non-blocking
+            process = subprocess.Popen(cmd, cwd=cfg.GAME_ROOT)
+            
+            # Wait for Game Menu to load
+            logger.info("Waiting 10 seconds for Menu...")
+            import time
+            time.sleep(10) 
+            
+            # Step 1: PLAY (F8)
+            logger.info("Injecting F8 (Play Demo)...")
+            from src.window_input import press_key
+            press_key(0x77) # F8
+            
+            # Wait for demo load
+            logger.info("Waiting 15 seconds for demo load...")
+            time.sleep(15)
+            
+            # Step 2: PREPARE (F9)
+            logger.info("Injecting F9 (Unlock Constraints)...")
+            press_key(0x78) # F9
+            time.sleep(1)
+            
+            # Step 3: SETUP (F10)
+            logger.info("Injecting F10 (Set Face)...")
+            press_key(0x79) # F10
+            time.sleep(2) # Wait for seek/pause
+            
+            # Step 4: ACTION (F11)
+            logger.info("Injecting F11 (Record)...")
+            press_key(0x7A) # F11
+            
+            logger.info("Render started. Waiting for user to close game...")
+            process.wait() # Wait for user to close window
+            
+            # --- Post-Processing: Move files ---
+            logger.info(f"Moving rendered files for {face_name} to temp directory...")
+            
+            # Search paths: The game might save to MOD_DIR or 'hl2' fallback
+            search_paths = [cfg.GAME_ROOT / cfg.MOD_DIR, cfg.GAME_ROOT / "hl2"]
+            files_moved = False
+
+            for mod_path in search_paths:
+                if not mod_path.exists():
+                    continue
+                    
+                # Move TGA sequences (e.g. front0001.tga)
+                found_files = list(mod_path.glob(f"{face_name}*.tga"))
+                if found_files:
+                    logger.info(f"Found {len(found_files)} TGA files in {mod_path}")
+                    import shutil
+                    for tga_file in found_files:
+                        target = cfg.TEMP_DIR / tga_file.name
+                        # Handle overwrite if needed or just move
+                        if target.exists():
+                            target.unlink()
+                        shutil.move(str(tga_file), target)
+                    files_moved = True
+
+                # Move WAV
+                wav_file = mod_path / f"{face_name}.wav"
+                if wav_file.exists():
+                    logger.info(f"Found audio file in {mod_path}")
+                    target_wav = cfg.TEMP_DIR / f"{face_name}.wav"
+                    if target_wav.exists():
+                        target_wav.unlink()
+                    shutil.move(str(wav_file), target_wav)
+            
+            if not files_moved:
+                 logger.warning(f"No output files found for {face_name} in {search_paths}")
+
             logger.info(f"Render complete for: {face_name}")
-        except subprocess.CalledProcessError as e:
+        except Exception as e:
+            logger.error(f"Game process failed for {face_name}: {e}")
+            raise
             logger.error(f"Game process failed for {face_name}: {e}")
             raise
         except FileNotFoundError:
