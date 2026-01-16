@@ -35,16 +35,16 @@ class EngineController:
             "cl_drawhud 0",
             "r_drawviewmodel 0",
             "crosshair 0",
-            f"fov 90",
+            f"default_fov 110",
             
             # F8: Play Demo
             f"bind F8 \"playdemo {cfg.DEMO_FILE}\"",
             
             # F9: Prepare (Unlock & Enable Maya Mode)
-            "bind F9 \"sv_cheats 1; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
+            "bind F9 \"sv_cheats 1; default_fov 110; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
             
             # F10: Setup Face (Absolute World Coordinates)
-            f"bind F10 \"demo_gototick 1; demo_pause; sv_cheats 1; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180; cam_idealdist 0; cam_ideallag 0; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; thirdperson\"",
+            f"bind F10 \"demo_gototick 1; demo_pause; sv_cheats 1; default_fov 110; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180; cam_idealdist 0; cam_idealdistright 0; cam_idealdistup 0; cam_collision 0; cam_ideallag 0; cam_snapto 1; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; thirdperson; demo_fov_override 110; default_fov 110\"",
 
             # F11: Record
             f"bind F11 \"thirdperson_mayamode 1; host_framerate {cfg.FRAMERATE}; startmovie {face_name} tga wav; demo_resume\""
