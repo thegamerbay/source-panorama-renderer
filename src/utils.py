@@ -26,3 +26,16 @@ def cleanup_temp(path: Path):
             shutil.rmtree(path)
         except Exception as e:
             logger.error(f"Failed to cleanup {path}: {e}")
+
+def get_file_md5(file_path: Path) -> str:
+    """Calculates the MD5 hash of a file."""
+    import hashlib
+    hash_md5 = hashlib.md5()
+    try:
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+    except Exception as e:
+        logger.warning(f"Failed to calculate hash for {file_path}: {e}")
+        return ""

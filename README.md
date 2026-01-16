@@ -1,7 +1,7 @@
 # 🎮 Source Engine Panorama Renderer
 
-> [!CAUTION]
-> **WORK IN PROGRESS**: This project is currently in active development. Features may be unstable, and the workflow requires some manual intervention.
+> [!NOTE]
+> **Status**: Beta. The workflow is now fully automated but requires correct configuration of demo files.
 
 > **Convert Half-Life 2 (and other Source) demos into immersive 8K 360° videos.**
 
@@ -20,7 +20,8 @@ It automates the tedious process of:
 
 ## 🚀 Features
 
--   **Automation**: Handles game launching, console commands, and rendering automatically.
+-   **Fully Automated**: Handles game launching, recording, and *exit* automatically. No manual intervention required during rendering.
+-   **Smart Monitoring**: Detects when the demo finishes by analyzing the rendered frames for static content (e.g., game menu).
 -   **High Resolution**: Supports 8K output (e.g., 3840x3840 per face).
 -   **Hardware Acceleration**: Uses NVIDIA `hevc_nvenc` for lightning-fast stitching on RTX cards.
 -   **Configurable**: Easily managed via `.env` configuration.
@@ -95,7 +96,8 @@ python main.py
 
 ### The Process
 1.  **Render Phase**: The script will launch the game 6 times (once for each face).
-    *   **IMPORTANT**: The automation requires you to **Manually Close the Game Window** after the demo playback has finished for each face. The script will wait until the window is closed to proceed to the next angle.
+    *   **Automation**: The script injects keypresses (F8-F12) to control the game.
+    *   **Automated Exit**: The script monitors the rendered frames. When it detects that the image has become static (end of demo, showing menu), it automatically commands the game to quit and proceeds to the next face.
     *   *Do not interact with the computer while the game window is active*, as keyboard inputs are simulated.
     *   The script uses `sv_cheats 1` and `thirdperson` to lock the camera angle for each face.
 2.  **Stitch Phase**: FFmpeg will process the thousands of generated TGA images.
