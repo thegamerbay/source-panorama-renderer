@@ -30,24 +30,33 @@ class EngineController:
         output_prefix = cfg.TEMP_DIR.absolute() / f"{face_name}_"
         output_prefix_str = str(output_prefix).replace("\\", "/")
 
+        # Calculate FOV for real 90 degrees on 1:1 output
+        # For Source Engine (Hor+), this is ~106.26
+        REAL_FOV = 106.26
+
         content = [
             "sv_cheats 1",
             "cl_drawhud 0",
             "r_drawviewmodel 0",
             "crosshair 0",
-            f"default_fov 110",
+            # Remove demo limit so fov command works
+            "demo_fov_override 0",
             
             # F8: Play Demo
             f"bind F8 \"playdemo {cfg.DEMO_FILE}\"",
             
-            # F9: Prepare (Unlock & Enable Maya Mode)
-            "bind F9 \"sv_cheats 1; default_fov 110; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
+            # F9: Prepare
+            # Add 'fov {REAL_FOV}'
+            f"bind F9 \"sv_cheats 1; fov {REAL_FOV}; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
             
-            # F10: Setup Face (Absolute World Coordinates)
-            f"bind F10 \"demo_gototick 1; demo_pause; sv_cheats 1; default_fov 110; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180; cam_idealdist 0; cam_idealdistright 0; cam_idealdistup 0; cam_collision 0; cam_ideallag 0; cam_snapto 1; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; thirdperson; demo_fov_override 110; default_fov 110\"",
+            # F10: Setup Face
+            # Removed 'demo_fov_override 110', replaced with 'fov {REAL_FOV}'
+            # Important: fov applies after pause, but should work as sv_cheats 1 is set
+            f"bind F10 \"demo_gototick 1; demo_pause; sv_cheats 1; fov {REAL_FOV}; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180; cam_idealdist 0; cam_idealdistright 0; cam_idealdistup 0; cam_collision 0; cam_ideallag 0; cam_snapto 1; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; thirdperson; demo_fov_override 0\"",
 
             # F11: Record
-            f"bind F11 \"thirdperson_mayamode 1; host_framerate {cfg.FRAMERATE}; startmovie {face_name} tga wav; demo_resume\""
+            # Ensure fov is not reset on resume
+            f"bind F11 \"fov {REAL_FOV}; thirdperson_mayamode 1; host_framerate {cfg.FRAMERATE}; startmovie {face_name} tga wav; demo_resume\""
         ]
         
         # Write the config file
