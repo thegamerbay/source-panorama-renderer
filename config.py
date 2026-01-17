@@ -41,6 +41,13 @@ class RenderConfig:
     # Folder for temporary TGA frames
     TEMP_DIR: Path = Path("temp_render_files")
 
+    # --- V360 EXTENDED SETTINGS ---
+    # Field of View for the input rig cameras (degrees). Assumes square renders.
+    RIG_FOV: float = float(os.getenv("RIG_FOV", "90.0"))
+    
+    # Width of the soft-edge blending region (normalized 0.0 - 0.5)
+    BLEND_WIDTH: float = float(os.getenv("BLEND_WIDTH", "0.05"))
+
     def __post_init__(self):
         self.output_path = Path("output")
         self.output_path.mkdir(exist_ok=True)
@@ -62,6 +69,25 @@ CUBE_FACES = {
     # So for DOWN (90 engine), we need input -90.
     "up":    (90, 0, 0),   
     "down":  (-90, 0, 0)
+}
+
+# FFmpeg v360 'cam_angles' format (Pitch Yaw) pairs.
+# Mapping Source Engine faces to v360 logical angles.
+# Assuming v360 coordinate system:
+# Yaw increases clockwise/counter-clockwise? 
+# Usually in 360 tools: 0=Front, 90=Right, 180=Back, 270=Left.
+# Source Engine: 0=Front, 90=Left, 180=Back, 270=Right.
+# So we need to map Source Faces to appropriate v360 angles.
+# Let's assume standard conventions for the output panorama (Equirect):
+# Center is Front.
+# We map each face to where it looks in the world.
+V360_ANGLES = {
+    "front": (0, 0),
+    "right": (0, 90),   # v360 Right is 90
+    "back":  (0, 180),
+    "left":  (0, 270),  # v360 Left is 270
+    "up":    (-90, 0),  # v360 Up is often -90 Pitch
+    "down":  (90, 0)    # v360 Down is often 90 Pitch
 }
 
 cfg = RenderConfig()

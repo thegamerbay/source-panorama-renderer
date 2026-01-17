@@ -1,7 +1,7 @@
 import subprocess
 import shutil
 from pathlib import Path
-from config import cfg
+from config import cfg, V360_ANGLES
 from src.utils import logger
 
 class FFmpegStitcher:
@@ -15,69 +15,76 @@ class FFmpegStitcher:
             raise RuntimeError("FFmpeg is required but not found. Please install it or check config.py")
 
     def stitch(self):
-        logger.info("--- Starting Panorama Stitching ---")
+        logger.info("--- Starting Panorama Stitching (Rig Mode) ---")
         
         inputs = []
+        input_pads = []
+        angles_list = []
         
-        # 1. Gather Video Inputs
-        # The filter 'v360' with input='c3x2' expects a specific grid:
-        #   Right Left Up
-        #   Down Front Back
-        # We need to assemble this grid using discrete inputs.
-        
-        # Order mapping for our inputs to match v360/c3x2 logical layout:
-        # We will stack them manually, so we just need to load them all.
-        # Let's define the order we will process them in Python to build the complex filter
-        order = ["right", "left", "up", "down", "front", "back"]
+        # Define the order of face processing
+        # This order determines the input stream indices: 0, 1, 2, ...
+        faces_order = ["right", "left", "up", "down", "front", "back"]
         
         missing_files = False
         
-        for face in order:
+        for idx, face in enumerate(faces_order):
             # Pattern matching: Name%04d.tga (e.g. front0001.tga)
             input_pattern = cfg.TEMP_DIR / f"{face}%04d.tga"
             
-            # Simple check if any file exists for this face
+            # Check for generic existence
             glob_pattern = f"{face}*.tga"
             if not list(cfg.TEMP_DIR.glob(glob_pattern)):
                 logger.error(f"Missing frames for face: {face}")
+                # We can either skip or error out. Usually critical failure.
                 missing_files = True
                 continue
                 
+            # Add Input Arguments
             inputs.extend(["-framerate", str(cfg.FRAMERATE), "-i", str(input_pattern)])
+            
+            # Prepare Filter Pads: [0:v], [1:v], etc.
+            input_pads.append(f"[{idx}:v]")
+            
+            # Prepare Camera Angle Pair
+            pitch, yaw = V360_ANGLES.get(face, (0, 0))
+            angles_list.append(f"{pitch} {yaw}")
             
         if missing_files:
             raise FileNotFoundError("One or more cubemap faces are missing. Cannot stitch.")
 
         # 2. Gather Audio Input
-        # Source Engine records a WAV file for each 'startmovie' session.
-        # Format: face.wav
-        # All 6 executions produce the same audio, so we just pick 'front'
+        # Source Engine audio is usually face specific naming but identical content
         audio_path = cfg.TEMP_DIR / "front.wav"
         has_audio = False
+        audio_input_idx = len(faces_order) # The next index after all video inputs
         
         if audio_path.exists():
             logger.info(f"Audio source found: {audio_path.name}")
-            # Add audio as the next input (Index 6, since 0-5 are video)
             inputs.extend(["-i", str(audio_path)])
             has_audio = True
         else:
-            logger.warning("No audio file found (front_.wav). Video will be silent.")
+            logger.warning("No audio file found (front.wav). Video will be silent.")
 
-        # 3. Build Filter Complex
-        # We have 6 streams: 0, 1, 2, 3, 4, 5 corresponding to Right, Left, Up, Down, Front, Back
-        # We want to arrange them into:
-        # [0][1][2] -> top row
-        # [3][4][5] -> bot row
-        # Then stack rows vertically -> grid
-        # Then v360 -> equirectangular
+        # 3. Build Filter Complex for v360 Rig Mode
+        # Format: cam_angles='p0 y0 p1 y1 ...'
+        cam_angles_str = " ".join(angles_list)
         
-        filter_complex = (
-            "[0:v][1:v][2:v]hstack=inputs=3[top];"
-            "[3:v][4:v][5:v]hstack=inputs=3[bot];"
-            "[top][bot]vstack=inputs=2[grid];"
-            "[grid]v360=input=c3x2:output=equirect:interp=lanczos[outv]"
+        # Concatenate all input pads for the filter
+        # e.g. [0:v][1:v][2:v][3:v][4:v][5:v]
+        pads_str = "".join(input_pads)
+        
+        # Construct the v360 filter string
+        # rig_fov and blend_width come from config
+        v360_filter = (
+            f"v360=input=tiles:output=equirect:interp=lanczos"
+            f":cam_angles='{cam_angles_str}'"
+            f":rig_fov={cfg.RIG_FOV}"
+            f":blend_width={cfg.BLEND_WIDTH}"
+            f"[outv]"
         )
-
+        
+        filter_complex = f"{pads_str}{v360_filter}"
+        
         output_file = cfg.output_path / f"{cfg.OUTPUT_NAME}.mp4"
 
         # 4. Final Command
@@ -90,44 +97,32 @@ class FFmpegStitcher:
         ]
 
         if has_audio:
-            # Map audio stream from input 6 (the 7th input)
-            cmd.extend(["-map", "6:a", "-c:a", "aac", "-b:a", "320k"])
+            # Map audio stream
+            cmd.extend(["-map", f"{audio_input_idx}:a", "-c:a", "aac", "-b:a", "320k"])
         
         # Video Encoding Settings
-        # Trying NVENC for RTX 4080 optimization
+        # Trying NVENC for RTX optimizations or Fallback
         try:
-            cmd.extend([
-                "-c:v", "hevc_nvenc",      # Nvidia HEVC Encoder
-                "-preset", "p7",           # Best Quality
-                "-cq", "18",               # Constant Quality factor
-                "-pix_fmt", "yuv420p",     # Standard pixel format for compatibility
+            cmd_nvenc = cmd + [
+                "-c:v", "hevc_nvenc",
+                "-preset", "p7",
+                "-cq", "18",
+                "-pix_fmt", "yuv420p",
                 str(output_file)
-            ])
-            logger.info(f"Executing FFmpeg with NVENC...")
-            subprocess.run(cmd, check=True)
+            ]
+            logger.info(f"Executing FFmpeg with NVENC (Rig Mode)...")
+            subprocess.run(cmd_nvenc, check=True)
             
         except subprocess.CalledProcessError:
-            logger.warning("NVENC encoding failed or returned error. Falling back to libx264 (CPU).")
-            # Clear previous failed command options from the failing point? 
-            # It's safer to rebuild the command for CPU fallback
-            cmd_cpu = [
-                self.ffmpeg_bin,
-                "-y",
-                *inputs,
-                "-filter_complex", filter_complex,
-                "-map", "[outv]",
-            ]
-            if has_audio:
-                cmd_cpu.extend(["-map", "6:a", "-c:a", "aac", "-b:a", "320k"])
-            
-            cmd_cpu.extend([
+            logger.warning("NVENC encoding failed. Falling back to libx264 (CPU).")
+            # CPU Fallback
+            cmd_cpu = cmd + [
                 "-c:v", "libx264",
                 "-preset", "slow",
                 "-crf", "18",
                 "-pix_fmt", "yuv420p",
                 str(output_file)
-            ])
-            
+            ]
             subprocess.run(cmd_cpu, check=True)
 
         logger.info(f"Stitching Complete! Output saved to: {output_file}")
