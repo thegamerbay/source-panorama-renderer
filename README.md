@@ -14,17 +14,18 @@
 This project provides a professional, automated workflow to render high-resolution panoramic videos from `.dem` files created in Valve's Source Engine games (Half-Life 2, Portal, etc.).
 
 It automates the tedious process of:
-1.  Launching the game and rendering 6 separate angles (cubemap faces).
-2.  Stitching those angles into a perfect Equirectangular generic projection using FFmpeg.
+1.  Launching the game and rendering **22 separate angles** (Spherical Rig) to ensure perfect coverage with a 60° FOV.
+2.  Stitching those angles into a perfect Equirectangular generic projection using FFmpeg with advanced blending.
 3.  Producing a YouTube-ready 360° video file.
 
 ## 🚀 Features
 
--   **Fully Automated**: Handles game launching, recording, and *exit* automatically. No manual intervention required during rendering.
+-   **Fully Automated**: Handles game launching, recording, and *exit* automatically. No manual intervention required.
+-   **Robust 22-Angle Capture**: Uses a spherical rig layout (Equator, Upper/Lower Rings, Caps) to eliminate distortion and gaps.
 -   **Smart Monitoring**: Detects when the demo finishes by analyzing the rendered frames for static content (e.g., game menu).
--   **High Resolution**: Supports 8K output (e.g., 3840x3840 per face).
+-   **High Resolution**: Supports 8K output.
 -   **Hardware Acceleration**: Uses NVIDIA `hevc_nvenc` for lightning-fast stitching on RTX cards.
--   **Configurable**: Easily managed via `.env` configuration.
+-   **Skip Rendering**: Support for `--stitch-only` to re-stitch existing frames without re-rendering.
 -   **Audio Support**: Automatically extracts and includes game audio.
 
 ## 🛠️ Prerequisites
@@ -65,6 +66,12 @@ Before you begin, ensure you have the following installed:
     
     # Resolution of ONE face (2048 = ~6K result, 4096 = 8K result)
     CUBE_FACE_SIZE=2048
+
+    # Camera Field of View (Matches the capture rig settings)
+    RIG_FOV=60.0
+    
+    # Blending width for stitching (0.0 to 1.0)
+    BLEND_WIDTH=0.05
     ```
 
 > [!WARNING]
@@ -72,7 +79,7 @@ Before you begin, ensure you have the following installed:
 
 ## 🎥 Recording Demos
 
-To us this tool, you first need a Source Engine demo file (`.dem`).
+To use this tool, you first need a Source Engine demo file (`.dem`).
 
 1.  **Launch the Game** (Half-Life 2, etc.).
 2.  **Enable Console**: Go to Options -> Keyboard -> Advanced -> Enable Developer Console.
@@ -88,33 +95,39 @@ To us this tool, you first need a Source Engine demo file (`.dem`).
 
 ## 🎬 Usage
 
-To start the render process, simply run:
+To start the full render process (Render + Stitch):
 
 ```bash
 python main.py
 ```
 
+To skip the rendering phase and just re-stitch existing frames (useful for tweaking stitch settings):
+
+```bash
+python main.py --stitch-only
+```
+
 ### The Process
-1.  **Render Phase**: The script will launch the game 6 times (once for each face).
+1.  **Render Phase**: The script will launch the game **22 times** (once for each angle).
     *   **Automation**: The script injects keypresses (F8-F12) to control the game.
-    *   **Automated Exit**: The script monitors the rendered frames. When it detects that the image has become static (end of demo, showing menu), it automatically commands the game to quit and proceeds to the next face.
+    *   **Automated Exit**: Monitors rendered frames for static content (menu) to determine when the demo ends.
     *   *Do not interact with the computer while the game window is active*, as keyboard inputs are simulated.
-    *   The script uses `sv_cheats 1` and `thirdperson` to lock the camera angle for each face.
-2.  **Stitch Phase**: FFmpeg will process the thousands of generated TGA images.
+2.  **Stitch Phase**: FFmpeg processes all 22 input streams at once.
     *   This step uses your GPU (NVENC) for performance.
 3.  **Result**: The final video will be saved in the `output/` directory.
 
 ## 🔧 Technical Details
 
-The tool works by recording 6 synchronous passes of the same demo file. For each pass, it sets the camera to a specific orthogonal angle:
--   **Front** (0°)
--   **Left** (90°)
--   **Back** (180°)
--   **Right** (270°)
--   **Up** (-90°)
--   **Down** (90°)
+The tool uses a **Spherical Rig** capture method instead of a simple Cubemap. This provides better quality and overlap for stitching.
 
-It then uses FFmpeg's `v360` filter to reproject these 6 inputs (Cubemap) into a single Equirectangular video stream.
+**Capture Geometry (22 Angles):**
+-   **Ring 0 (Equator)**: 8 shots at Pitch 0° (every 45°)
+-   **Ring 1 (Upper)**: 6 shots at Pitch +45° (every 60°)
+-   **Ring 2 (Lower)**: 6 shots at Pitch -45° (every 60°)
+-   **Zenith**: 1 shot at Pitch +90°
+-   **Nadir**: 1 shot at Pitch -90°
+
+It uses FFmpeg's `v360` filter with `input=tiles` (Rig Mode) to project these inputs into a single Equirectangular video stream.
 
 ## 📝 License
 
