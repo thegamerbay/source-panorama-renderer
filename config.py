@@ -86,6 +86,6 @@ def get_v360_angle(source_pitch, source_yaw):
     v360 Yaw increases Clockwise (Right).
     v360_yaw = (360 - source_yaw) % 360.
     """
-    p = -source_pitch
+    p = source_pitch
     y = (360 - source_yaw) % 360
     return p, y
