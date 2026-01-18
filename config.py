@@ -86,8 +86,8 @@ V360_ANGLES = {
     "right": (0, 90),   # v360 Right is 90
     "back":  (0, 180),
     "left":  (0, 270),  # v360 Left is 270
-    "up":    (-90, 0),  # v360 Up is often -90 Pitch
-    "down":  (90, 0)    # v360 Down is often 90 Pitch
+    "up":    (90, 0),   # v360 Up
+    "down":  (-90, 0)   # v360 Down
 }
 
 cfg = RenderConfig()
