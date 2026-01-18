@@ -85,12 +85,12 @@ class FFmpegStitcher:
         
         # NVENC encoding
         try:
-            cmd_nvenc = cmd + ["-c:v", "hevc_nvenc", "-preset", "p7", "-cq", "18", str(output_file)]
+            cmd_nvenc = cmd + ["-c:v", "hevc_nvenc", "-pix_fmt", "yuv420p", "-preset", "p7", "-cq", "18", str(output_file)]
             logger.info("Encoding with NVENC...")
             subprocess.run(cmd_nvenc, check=True)
         except subprocess.CalledProcessError:
             logger.warning("NVENC failed, using CPU...")
-            cmd_cpu = cmd + ["-c:v", "libx264", "-crf", "18", str(output_file)]
+            cmd_cpu = cmd + ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", str(output_file)]
             subprocess.run(cmd_cpu, check=True)
 
         logger.info(f"Done! Output: {output_file}")
