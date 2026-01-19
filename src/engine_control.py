@@ -51,14 +51,14 @@ class EngineController:
             f"bind F8 \"playdemo {cfg.DEMO_FILE}\"",
             
             # F9: Prepare (Reset constraints)
-            f"bind F9 \"sv_cheats 1; mat_vsync 0; fps_max 0; jpeg_quality 100; fov {REAL_FOV}; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
+            f"bind F9 \"sv_cheats 1; mat_vsync 0; fps_max 0; fov {REAL_FOV}; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
             
             # F10: Setup Face
             # We use {-pitch} because Source Engine positive pitch is DOWN, but our config uses positive for UP.
             f"bind F10 \"demo_gototick 1; demo_pause; sv_cheats 1; fov {REAL_FOV}; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180; cam_idealdist 0; cam_idealdistright 0; cam_idealdistup 0; cam_collision 0; cam_ideallag 0; cam_snapto 1; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; thirdperson; demo_fov_override 0\"",
 
             # F11: Record
-            f"bind F11 \"fov {REAL_FOV}; thirdperson_mayamode 1; host_framerate {cfg.FRAMERATE}; startmovie {face_name} jpeg wav; demo_resume\"",
+            f"bind F11 \"fov {REAL_FOV}; thirdperson_mayamode 1; host_framerate {cfg.FRAMERATE}; startmovie {face_name} tga wav; demo_resume\"",
             
             # F12: Stop Record and Quit
             "bind F12 \"endmovie; quit\""
@@ -78,7 +78,7 @@ class EngineController:
         search_paths = [cfg.GAME_ROOT / cfg.MOD_DIR, cfg.GAME_ROOT / "hl2"]
         for mod_path in search_paths:
             if not mod_path.exists(): continue
-            for f in mod_path.glob(f"{face_name}*.jpg"):
+            for f in mod_path.glob(f"{face_name}*.tga"):
                 try: f.unlink()
                 except: pass
             wav = mod_path / f"{face_name}.wav"
@@ -126,7 +126,7 @@ class EngineController:
             # --- MONITORING LOOP (Same as before) ---
             monitor_paths = {cfg.GAME_ROOT / cfg.MOD_DIR, cfg.GAME_ROOT / "hl2"}
             monitor_paths = [p for p in monitor_paths if p.exists()]
-            tga_pattern = f"{face_name}*.jpg"
+            tga_pattern = f"{face_name}*.tga"
             
             last_hash = ""
             stability_cycles = 0
@@ -163,14 +163,55 @@ class EngineController:
                 except: pass
                 time.sleep(2.0)
             
-            # Move files
-            logger.info(f"Moving files for {face_name}...")
+            # Move files (Convert TGA -> JPEG) with GPU attempt
+            logger.info(f"Processing files for {face_name}...")
             search_paths = [cfg.GAME_ROOT / cfg.MOD_DIR, cfg.GAME_ROOT / "hl2"]
             for mod_path in search_paths:
                 if not mod_path.exists(): continue
-                for img_file in mod_path.glob(f"{face_name}*.jpg"):
-                    target = cfg.TEMP_DIR / img_file.name
-                    shutil.move(str(img_file), target)
+                
+                # 1. Identify TGA files
+                tga_files = list(mod_path.glob(f"{face_name}*.tga"))
+                if not tga_files:
+                    continue
+
+                # 2. Batch Convert using FFmpeg (Sequence Pattern)
+                input_pattern = mod_path / f"{face_name}%04d.tga"
+                output_pattern = cfg.TEMP_DIR / f"{face_name}%04d.jpg"
+                
+                logger.info(f"Batch converting {len(tga_files)} frames for {face_name}...")
+                
+                cmd_base_args = [cfg.FFMPEG_BIN, "-y", "-i", str(input_pattern)]
+
+                # Try NVENC first (as requested), fallback to CPU
+                try:
+                    # Attempt to use mjpeg_nvenc if available (rare, but satisfies request structure)
+                    cmd_nvenc = cmd_base_args + [
+                        "-c:v", "mjpeg_nvenc", 
+                        "-q:v", "2", 
+                        str(output_pattern)
+                    ]
+                    # logger.info("Attempting NVENC encoding...") 
+                    subprocess.run(cmd_nvenc, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    logger.info("NVENC encoding successful.")
+                except subprocess.CalledProcessError:
+                    # Fallback to standard CPU MJPEG
+                    cmd_cpu = cmd_base_args + [
+                        "-c:v", "mjpeg",
+                        "-q:v", "2",
+                        str(output_pattern)
+                    ]
+                    try:
+                        subprocess.run(cmd_cpu, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    except subprocess.CalledProcessError as e:
+                        logger.error(f"CPU encoding failed for {face_name}: {e}")
+                        raise e
+
+                # 3. Cleanup TGA files
+                for f in tga_files:
+                    try: f.unlink()
+                    except: pass
+                
+                # Move Audio
                 wav_file = mod_path / f"{face_name}.wav"
                 if wav_file.exists():
                     target_wav = cfg.TEMP_DIR / f"{face_name}.wav"
