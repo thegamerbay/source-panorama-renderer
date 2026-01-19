@@ -43,14 +43,14 @@ class EngineController:
             f"bind F8 \"playdemo {cfg.DEMO_FILE}\"",
             
             # F9: Prepare (Reset constraints)
-            f"bind F9 \"sv_cheats 1; fov {REAL_FOV}; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
+            f"bind F9 \"sv_cheats 1; mat_vsync 0; fps_max 0; jpeg_quality 100; fov {REAL_FOV}; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
             
             # F10: Setup Face
             # We use {-pitch} because Source Engine positive pitch is DOWN, but our config uses positive for UP.
             f"bind F10 \"demo_gototick 1; demo_pause; sv_cheats 1; fov {REAL_FOV}; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180; cam_idealdist 0; cam_idealdistright 0; cam_idealdistup 0; cam_collision 0; cam_ideallag 0; cam_snapto 1; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; thirdperson; demo_fov_override 0\"",
 
             # F11: Record
-            f"bind F11 \"fov {REAL_FOV}; thirdperson_mayamode 1; host_framerate {cfg.FRAMERATE}; startmovie {face_name} tga wav; demo_resume\"",
+            f"bind F11 \"fov {REAL_FOV}; thirdperson_mayamode 1; host_framerate {cfg.FRAMERATE}; startmovie {face_name} jpeg wav; demo_resume\"",
             
             # F12: Stop Record and Quit
             "bind F12 \"endmovie; quit\""
@@ -70,7 +70,7 @@ class EngineController:
         search_paths = [cfg.GAME_ROOT / cfg.MOD_DIR, cfg.GAME_ROOT / "hl2"]
         for mod_path in search_paths:
             if not mod_path.exists(): continue
-            for f in mod_path.glob(f"{face_name}*.tga"):
+            for f in mod_path.glob(f"{face_name}*.jpg"):
                 try: f.unlink()
                 except: pass
             wav = mod_path / f"{face_name}.wav"
@@ -118,7 +118,7 @@ class EngineController:
             # --- MONITORING LOOP (Same as before) ---
             monitor_paths = {cfg.GAME_ROOT / cfg.MOD_DIR, cfg.GAME_ROOT / "hl2"}
             monitor_paths = [p for p in monitor_paths if p.exists()]
-            tga_pattern = f"{face_name}*.tga"
+            tga_pattern = f"{face_name}*.jpg"
             
             last_hash = ""
             stability_cycles = 0
@@ -160,9 +160,9 @@ class EngineController:
             search_paths = [cfg.GAME_ROOT / cfg.MOD_DIR, cfg.GAME_ROOT / "hl2"]
             for mod_path in search_paths:
                 if not mod_path.exists(): continue
-                for tga_file in mod_path.glob(f"{face_name}*.tga"):
-                    target = cfg.TEMP_DIR / tga_file.name
-                    shutil.move(str(tga_file), target)
+                for img_file in mod_path.glob(f"{face_name}*.jpg"):
+                    target = cfg.TEMP_DIR / img_file.name
+                    shutil.move(str(img_file), target)
                 wav_file = mod_path / f"{face_name}.wav"
                 if wav_file.exists():
                     target_wav = cfg.TEMP_DIR / f"{face_name}.wav"

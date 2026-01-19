@@ -27,10 +27,10 @@ class FFmpegStitcher:
         
         for idx, face_name in enumerate(faces_order):
             # Input pattern for sequence
-            input_pattern = cfg.TEMP_DIR / f"{face_name}%04d.tga"
+            input_pattern = cfg.TEMP_DIR / f"{face_name}%04d.jpg"
             
             # Check for existence
-            if not list(cfg.TEMP_DIR.glob(f"{face_name}*.tga")):
+            if not list(cfg.TEMP_DIR.glob(f"{face_name}*.jpg")):
                 logger.error(f"Missing frames for face: {face_name}")
                 missing_files = True
                 continue
