@@ -62,8 +62,13 @@ class FFmpegStitcher:
         cam_angles_str = " ".join(angles_list)
         pads_str = "".join(input_pads)
         
+        # Calculate Output Resolution
+        out_w = int((360.0 / cfg.RIG_FOV) * cfg.CUBE_FACE_SIZE)
+        out_h = int(out_w / 2)
+        
         v360_filter = (
             f"v360=input=tiles:output=equirect:interp=lanczos"
+            f":w={out_w}:h={out_h}"
             f":cam_angles='{cam_angles_str}'"
             f":rig_fov={cfg.RIG_FOV}"
             f":blend_width={cfg.BLEND_WIDTH}"
