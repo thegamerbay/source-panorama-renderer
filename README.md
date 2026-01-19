@@ -33,9 +33,26 @@ It automates the tedious process of:
 Before you begin, ensure you have the following installed:
 
 1.  **Python 3.8+**
-2.  **FFmpeg** (Must be added to system PATH or specified in config).
+2.  **FFmpeg** (Specific Custom Build Required - see below).
 3.  **Source Engine Game** (Half-Life 2, HL2: Episode 1/2, etc.).
 4.  **Disk Space**: Rendering uncompressed TGA frames requires significant space (approx. 50-100GB for long demos).
+
+## ⚡ Custom FFmpeg Requirements
+
+This project requires a **modified version of FFmpeg** with an advanced `v360` filter. Standard FFmpeg builds **will not work** correctly because they lack the "Right Mode" (`input=tiles`) feature required for our 22-angle stitching.
+
+### 📥 Download Recommended Build (Windows)
+**[Download ffmpeg-n8.0.1-v360-advanced-v1.2-gpl-amd64-static.zip](https://github.com/artryazanov/ffmpeg-msvc-prebuilt/releases/download/n8.0.1-v360-advanced-v1.2/ffmpeg-n8.0.1-v360-advanced-v1.2-gpl-amd64-static.zip)**
+
+*For other architectures (ARM, x86, Shared libraries), check the [Release Page](https://github.com/artryazanov/ffmpeg-msvc-prebuilt/releases/tag/n8.0.1-v360-advanced-v1.2).*
+
+### ✨ Key Features of this Build
+*   **Exclusive "Rig Mode"**: Designed for high-fidelity panoramic stitching from arbitrary multi-camera setups.
+*   **Seamless Blending**: Uses weighted inverse projection to eliminate seams between the 22 angles.
+*   **Performance**: Compiled with MSVC and optimized for Windows.
+
+> [!IMPORTANT]
+> Extract the `bin/ffmpeg.exe` from the zip and either add it to your system PATH or configure the path in your `.env` file.
 
 ## 📦 Installation
 
