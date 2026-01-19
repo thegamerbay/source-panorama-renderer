@@ -38,6 +38,14 @@ class EngineController:
             "r_drawviewmodel 0",
             "crosshair 0",
             "demo_fov_override 0",
+
+            # Temporal Artifacts Fixes
+            "cl_clock_correction 0",
+            "mat_no_bonylighting 1",
+            "r_3dsky 0",
+
+            # Vignette Fix
+            "mat_vignette_enable 0",
             
             # F8: Play Demo
             f"bind F8 \"playdemo {cfg.DEMO_FILE}\"",

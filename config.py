@@ -15,11 +15,11 @@ class RenderConfig:
     
     # --- RENDER SETTINGS ---
     DEMO_FILE: str = os.getenv("DEMO_FILE", "my_gameplay")
-    OUTPUT_NAME: str = os.getenv("OUTPUT_NAME", "final_panorama_8k")
+    OUTPUT_NAME: str = os.getenv("OUTPUT_NAME", "final_panorama")
     FRAMERATE: int = int(os.getenv("FRAMERATE", "60"))
     
     # Resolution of ONE face
-    CUBE_FACE_SIZE: int = int(os.getenv("CUBE_FACE_SIZE", "2048"))
+    CUBE_FACE_SIZE: int = int(os.getenv("CUBE_FACE_SIZE", "640"))
     
     # --- FFMPEG SETTINGS ---
     FFMPEG_BIN: str = os.getenv("FFMPEG_BIN", "ffmpeg")
@@ -30,7 +30,7 @@ class RenderConfig:
     RIG_FOV: float = float(os.getenv("RIG_FOV", "60.0"))
     
     # Blend width needs to be sufficient for the overlap
-    BLEND_WIDTH: float = float(os.getenv("BLEND_WIDTH", "0.05"))
+    BLEND_WIDTH: float = float(os.getenv("BLEND_WIDTH", "0.20"))
 
     def __post_init__(self):
         self.output_path = Path("output")

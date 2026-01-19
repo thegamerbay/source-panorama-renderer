@@ -39,7 +39,7 @@ Before you begin, ensure you have the following installed:
 
 ## ⚡ Custom FFmpeg Requirements
 
-This project requires a **modified version of FFmpeg** with an advanced `v360` filter. Standard FFmpeg builds **will not work** correctly because they lack the "Right Mode" (`input=tiles`) feature required for our 22-angle stitching.
+This project requires a **modified version of FFmpeg** with an advanced `v360` filter. Standard FFmpeg builds **will not work** correctly because they lack the "Rig Mode" (`input=tiles`) feature required for our 22-angle stitching.
 
 ### 📥 Download Recommended Build (Windows)
 **[Download ffmpeg-n8.0.1-v360-advanced-v1.2-gpl-amd64-static.zip](https://github.com/artryazanov/ffmpeg-msvc-prebuilt/releases/download/n8.0.1-v360-advanced-v1.2/ffmpeg-n8.0.1-v360-advanced-v1.2-gpl-amd64-static.zip)**
@@ -81,14 +81,14 @@ This project requires a **modified version of FFmpeg** with an advanced `v360` f
     # Name of the demo file inside the game folder (without .dem)
     DEMO_FILE=my_epic_gameplay
     
-    # Resolution of ONE face (2048 = ~6K result, 4096 = 8K result)
-    CUBE_FACE_SIZE=2048
+    # Resolution of ONE face (640 = 4K result, 1280 = 8K result)
+    CUBE_FACE_SIZE=640
 
     # Camera Field of View (Matches the capture rig settings)
     RIG_FOV=60.0
     
     # Blending width for stitching (0.0 to 1.0)
-    BLEND_WIDTH=0.05
+    BLEND_WIDTH=0.20
     ```
 
 > [!WARNING]
