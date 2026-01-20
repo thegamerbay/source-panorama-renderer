@@ -1,9 +1,9 @@
 # 🎮 Source Engine Panorama Renderer
 
-> [!NOTE]
-> **Status**: Beta. The workflow is now fully automated but requires correct configuration of demo files.
+Convert Half-Life 2 (and other Source) demos into immersive 8K 360° videos.
 
-> **Convert Half-Life 2 (and other Source) demos into immersive 8K 360° videos.**
+> [!NOTE]
+> **Status**: Beta. Development and debugging are in progress. Currently using Half-Life 2.
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python)
 ![FFmpeg](https://img.shields.io/badge/FFmpeg-Required-green?style=for-the-badge&logo=ffmpeg)
