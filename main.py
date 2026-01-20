@@ -1,7 +1,7 @@
 import argparse
 from src.engine_control import EngineController
 from src.ffmpeg_worker import FFmpegStitcher
-from src.utils import logger
+from src.utils import logger, install_player_model
 from config import cfg, PANORAMA_FACES
 
 def main():
@@ -24,6 +24,9 @@ def main():
 
     if not args.stitch_only:
         try:
+            # Install/Verify player model to prevent player rendering
+            install_player_model(cfg.GAME_ROOT, cfg.MOD_DIR)
+
             engine = EngineController()
             # 1. Render Phase
             logger.info("Phase 1: Rendering Panorama Faces...")

@@ -27,6 +27,7 @@ It automates the tedious process of:
 -   **Hardware Acceleration**: Uses NVIDIA `hevc_nvenc` for lightning-fast stitching on RTX cards.
 -   **Skip Rendering**: Support for `--stitch-only` to re-stitch existing frames without re-rendering.
 -   **Audio Support**: Automatically extracts and includes game audio.
+-   **Player Model Hiding**: Automatically replaces the player model with an unobtrusive "battery" model during rendering to prevent camera obstruction.
 
 ## 🛠️ Prerequisites
 
@@ -128,6 +129,7 @@ python main.py --stitch-only
 1.  **Render Phase**: The script will launch the game **22 times** (once for each angle).
     *   **Automation**: The script injects keypresses (F8-F12) to control the game.
     *   **Automated Exit**: Monitors rendered frames for static content (menu) to determine when the demo ends.
+    *   **Player Model Replacement**: Before rendering, the script automatically copies a custom `player.mdl` (battery model) to the game's `models/` directory to ensure the player's view is not obstructed by the default weapon or character model.
     *   *Do not interact with the computer while the game window is active*, as keyboard inputs are simulated.
 2.  **Stitch Phase**: FFmpeg processes all 22 input streams at once.
     *   This step uses your GPU (NVENC) for performance.
