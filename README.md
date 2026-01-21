@@ -40,7 +40,7 @@ Before you begin, ensure you have the following installed:
 
 ## ⚡ Custom FFmpeg Requirements
 
-This project requires a **modified version of FFmpeg** with an advanced `v360` filter. Standard FFmpeg builds **will not work** correctly because they lack the "Rig Mode" (`input=tiles`) feature required for our 22-angle stitching.
+This project requires a **modified version of FFmpeg** powered by the [FFmpeg v360 Filter - Advanced Rig Mode](https://github.com/artryazanov/ffmpeg-v360-advanced) project. Standard FFmpeg builds **will not work** correctly because they lack the "Rig Mode" (`input=tiles`) feature required for our 22-angle stitching. This advanced extension introduces a robust solution for transforming multiple directional video inputs into a cohesive 360° panoramic output with high-quality blending.
 
 ### 📥 Download Recommended Build (Windows)
 **[Download ffmpeg-n8.0.1-v360-advanced-v1.3-gpl-amd64-static.zip](https://github.com/artryazanov/ffmpeg-msvc-prebuilt/releases/download/n8.0.1-v360-advanced-v1.3/ffmpeg-n8.0.1-v360-advanced-v1.3-gpl-amd64-static.zip)**
