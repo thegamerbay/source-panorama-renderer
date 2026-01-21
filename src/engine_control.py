@@ -110,7 +110,7 @@ class EngineController:
             process = subprocess.Popen(cmd, cwd=cfg.GAME_ROOT)
             
             # Automation Sequence (Timing can be adjusted if loading is slow)
-            time.sleep(10) 
+            time.sleep(20)
             logger.info("Injecting F8 (Play Demo)...")
             press_key(0x77) 
             time.sleep(15)
@@ -141,7 +141,8 @@ class EngineController:
                     all_files = []
                     for p in monitor_paths:
                         all_files.extend(p.glob(tga_pattern))
-                    all_files.sort(key=lambda x: x.name)
+                    # Sort by modification time to ensure correct order even if numbering overflows (e.g. face9999 -> face10000)
+                    all_files.sort(key=lambda x: x.stat().st_mtime)
                     
                     if len(all_files) >= 2:
                         check_file = all_files[-2]
@@ -154,7 +155,7 @@ class EngineController:
                             stability_cycles = 0
                         last_hash = current_hash
                     
-                    if stability_cycles >= 5:
+                    if stability_cycles >= 15:
                         logger.info("Menu detected. Finishing...")
                         press_key(0x7B) # F12
                         try: process.wait(timeout=10)
