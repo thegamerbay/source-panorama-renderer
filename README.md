@@ -43,9 +43,9 @@ Before you begin, ensure you have the following installed:
 This project requires a **modified version of FFmpeg** with an advanced `v360` filter. Standard FFmpeg builds **will not work** correctly because they lack the "Rig Mode" (`input=tiles`) feature required for our 22-angle stitching.
 
 ### 📥 Download Recommended Build (Windows)
-**[Download ffmpeg-n8.0.1-v360-advanced-v1.2-gpl-amd64-static.zip](https://github.com/artryazanov/ffmpeg-msvc-prebuilt/releases/download/n8.0.1-v360-advanced-v1.2/ffmpeg-n8.0.1-v360-advanced-v1.2-gpl-amd64-static.zip)**
+**[Download ffmpeg-n8.0.1-v360-advanced-v1.3-gpl-amd64-static.zip](https://github.com/artryazanov/ffmpeg-msvc-prebuilt/releases/download/n8.0.1-v360-advanced-v1.3/ffmpeg-n8.0.1-v360-advanced-v1.3-gpl-amd64-static.zip)**
 
-*For other architectures (ARM, x86, Shared libraries), check the [Release Page](https://github.com/artryazanov/ffmpeg-msvc-prebuilt/releases/tag/n8.0.1-v360-advanced-v1.2).*
+*For other architectures (ARM, x86, Shared libraries), check the [Release Page](https://github.com/artryazanov/ffmpeg-msvc-prebuilt/releases/tag/n8.0.1-v360-advanced-v1.3).*
 
 ### ✨ Key Features of this Build
 *   **Exclusive "Rig Mode"**: Designed for high-fidelity panoramic stitching from arbitrary multi-camera setups.
