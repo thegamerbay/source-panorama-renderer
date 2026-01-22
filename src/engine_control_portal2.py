@@ -1,7 +1,6 @@
 import subprocess
 import time
 import shutil
-import os
 from pathlib import Path
 from config import cfg, PANORAMA_FACES
 from src.utils import logger
@@ -11,10 +10,10 @@ class EngineController:
     """Controls the game engine (Portal 2) to render frames."""
     
     def __init__(self):
-        # Путь к конфигам: .../Portal 2/portal2/cfg
+        # Config path: .../Portal 2/portal2/cfg
         self.cfg_path = cfg.GAME_ROOT / cfg.MOD_DIR / "cfg"
-        self.config_cfg = self.cfg_path / "config.cfg"
-        self.config_bak = self.cfg_path / "config.cfg.bak"
+        self.autoexec = self.cfg_path / "autoexec.cfg"
+        self.autoexec_bak = self.cfg_path / "autoexec.cfg.bak"
         
         if not self.cfg_path.exists():
             logger.warning(f"Config directory not found at {self.cfg_path}.")
@@ -27,20 +26,19 @@ class EngineController:
         REAL_FOV = cfg.RIG_FOV
 
         content = [
-            "echo \">>> PANORAMA RENDER CONFIG LOADED <<<\"", 
+            f"echo \">>> LOADING RENDER CONFIG FOR {face_name} <<<\"", 
             "sv_cheats 1",
-            "con_enable 1",
             "cl_drawhud 0",
             "r_drawviewmodel 0",
             "crosshair 0",
             "demo_fov_override 0",
             "mat_vignette_enable 0",
-            "c_thirdpersonshoulder 0", # Важно для камеры
+            "c_thirdpersonshoulder 0",
 
-            # Очистка клавиш
+            # Clear keys
             "unbind F8", "unbind F9", "unbind F10", "unbind F11", "unbind F12",
 
-            # Бинды
+            # Binds
             f"bind \"F8\" \"playdemo {cfg.DEMO_FILE}\"",
             f"bind \"F9\" \"sv_cheats 1; mat_vsync 0; fps_max 0; fov {REAL_FOV}; cl_fov {REAL_FOV}; setmodel models/player.mdl; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
             f"bind \"F10\" \"demo_gototick 1; demo_pause; sv_cheats 1; fov {REAL_FOV}; cl_fov {REAL_FOV}; setmodel models/player.mdl; thirdperson; thirdperson_mayamode 1; c_thirdpersonshoulder 0; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180; cam_idealdist 0; cam_idealdistright 0; cam_idealdistup 0; cam_collision 0; cam_ideallag 0; cam_snapto 1; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; thirdperson; demo_fov_override 0\"",
@@ -50,7 +48,7 @@ class EngineController:
         
         file_path = self.cfg_path / cfg_filename
         try:
-            with open(file_path, "w") as f:
+            with open(file_path, "w", encoding='utf-8') as f:
                 f.write("\n".join(content))
         except IOError as e:
             logger.error(f"Failed to write config file {file_path}: {e}")
@@ -58,44 +56,37 @@ class EngineController:
         
         return cfg_filename
 
-    def _inject_into_config(self, face_name: str):
+    def _setup_autoexec(self, render_cfg_name: str):
         """
-        Directly modifies config.cfg to include 'exec render_face'.
-        This guarantees the game loads our settings.
+        Sets up autoexec.cfg to execute our render config automatically on launch.
         """
-        # 1. Backup existing config
-        if self.config_cfg.exists():
-            if not self.config_bak.exists(): # Don't overwrite existing backup if script crashed
-                shutil.copy2(self.config_cfg, self.config_bak)
+        # 1. Backup existing autoexec if exists and backup doesn't
+        if self.autoexec.exists():
+            if not self.autoexec_bak.exists():
+                shutil.copy2(self.autoexec, self.autoexec_bak)
         
-        # 2. Append exec command to the end of config.cfg
+        # 2. Overwrite autoexec.cfg with our command
+        # We add echo to see in console that the file loaded
+        content = f"echo \">>> AUTOEXEC LOADED <<<\"; exec {render_cfg_name}\n"
+        
         try:
-            current_data = ""
-            if self.config_cfg.exists():
-                with open(self.config_cfg, "r", encoding="utf-8", errors="ignore") as f:
-                    current_data = f.read()
-            
-            # Добавляем команду exec в самый конец файла
-            injection = f"\n\n// --- PANORAMA INJECTION START ---\nexec render_{face_name}\n// --- PANORAMA INJECTION END ---\n"
-            
-            with open(self.config_cfg, "w", encoding="utf-8") as f:
-                f.write(current_data + injection)
-            
-            logger.info(f"Injected 'exec render_{face_name}' into config.cfg")
-            
+            with open(self.autoexec, "w", encoding='utf-8') as f:
+                f.write(content)
         except Exception as e:
-            logger.error(f"Failed to inject config: {e}")
+            logger.error(f"Failed to setup autoexec: {e}")
             raise
 
-    def _restore_config(self):
-        """Restores the original config.cfg."""
-        if self.config_bak.exists():
-            try:
-                shutil.copy2(self.config_bak, self.config_cfg)
-                self.config_bak.unlink() # Remove backup on success
-                logger.info("Restored original config.cfg")
-            except Exception as e:
-                logger.error(f"Failed to restore config: {e}")
+    def _restore_autoexec(self):
+        """Restores the original autoexec.cfg."""
+        try:
+            if self.autoexec.exists():
+                self.autoexec.unlink() # Remove our temporary file
+            
+            if self.autoexec_bak.exists():
+                shutil.move(self.autoexec_bak, self.autoexec) # Restore old one
+                logger.info("Restored original autoexec.cfg")
+        except Exception as e:
+            logger.error(f"Failed to restore autoexec: {e}")
 
     def _cleanup_game_artifacts(self, face_name: str):
         search_paths = [cfg.GAME_ROOT / cfg.MOD_DIR, cfg.GAME_ROOT / "portal2"]
@@ -115,23 +106,24 @@ class EngineController:
 
         angles = PANORAMA_FACES[face_name]
         
-        # 1. Generate the render config file
-        self._generate_render_cfg(face_name, angles)
+        # 1. Generate render config
+        render_cfg = self._generate_render_cfg(face_name, angles)
         
-        # 2. Inject execution command into config.cfg
-        self._inject_into_config(face_name)
+        # 2. Setup Autoexec to run it
+        self._setup_autoexec(render_cfg)
         
         self._cleanup_game_artifacts(face_name)
         
         logger.info(f"--- Starting Render: {face_name} {angles} ---")
         
+        # Launch arguments
         cmd = [
             str(cfg.GAME_EXE),
             "-game", cfg.MOD_DIR,
             "-novid",
-            "-nojoy",       # Отключаем джойстик (важно!)
+            "-nojoy",         # Disable joystick
             "-window", "-w", str(cfg.CUBE_FACE_SIZE), "-h", str(cfg.CUBE_FACE_SIZE),
-            # Аргумент +exec здесь больше не нужен, так как мы изменили config.cfg
+            # We do NOT use +exec here, as autoexec.cfg will load itself
         ]
 
         process = None
@@ -139,10 +131,11 @@ class EngineController:
             logger.info(f"Launching: {' '.join(cmd)}")
             process = subprocess.Popen(cmd, cwd=cfg.GAME_ROOT)
             
-            # Ждем загрузку (увеличьте время если нужно)
-            time.sleep(25) 
+            # Wait for load. 
+            # Portal 2 loads slowly, better give it a buffer.
+            time.sleep(30) 
             
-            # Клик мышкой для фокуса окна
+            # Focus window (just in case, but we don't type text anymore)
             logger.info("Clicking to focus window...")
             click_mouse()
             time.sleep(1)
@@ -202,7 +195,7 @@ class EngineController:
                 except: pass
                 time.sleep(2.0)
             
-            # Conversion logic (без изменений)
+            # Conversion logic (no changes)
             logger.info(f"Processing files for {face_name}...")
             search_paths = [cfg.GAME_ROOT / cfg.MOD_DIR, cfg.GAME_ROOT / "portal2"]
             for mod_path in search_paths:
@@ -248,5 +241,5 @@ class EngineController:
             if process and process.poll() is None: process.terminate()
             raise
         finally:
-            # Восстанавливаем оригинальный config.cfg в любом случае
-            self._restore_config()
+            # Always restore autoexec
+            self._restore_autoexec()
