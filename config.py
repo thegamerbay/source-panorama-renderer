@@ -9,8 +9,12 @@ load_dotenv()
 @dataclass
 class RenderConfig:
     # --- PATHS ---
+    ENGINE_TYPE: str = os.getenv("ENGINE_TYPE", "hl2") # hl2, portal2
     GAME_ROOT: Path = Path(os.getenv("GAME_ROOT", r"C:\Games\Steam\steamapps\common\Half-Life 2"))
-    GAME_EXE: Path = GAME_ROOT / "hl2.exe"
+    # Default to None, resolve in post_init if not set
+    _GAME_EXE_RAW: str = os.getenv("GAME_EXE", "") 
+    GAME_EXE: Path = Path(_GAME_EXE_RAW) if _GAME_EXE_RAW else None
+    
     MOD_DIR: str = os.getenv("MOD_DIR", "hl2_complete")
     
     # --- RENDER SETTINGS ---
@@ -33,6 +37,12 @@ class RenderConfig:
     BLEND_WIDTH: float = float(os.getenv("BLEND_WIDTH", "0.20"))
 
     def __post_init__(self):
+        if self.GAME_EXE is None:
+            if self.ENGINE_TYPE == "portal2":
+                self.GAME_EXE = self.GAME_ROOT / "portal2.exe"
+            else:
+                self.GAME_EXE = self.GAME_ROOT / "hl2.exe"
+
         self.output_path = Path("output")
         self.output_path.mkdir(exist_ok=True)
         self.TEMP_DIR.mkdir(exist_ok=True)

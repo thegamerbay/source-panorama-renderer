@@ -1,5 +1,4 @@
 import argparse
-from src.engine_control import EngineController
 from src.ffmpeg_worker import FFmpegStitcher
 from src.utils import logger, install_player_model
 from config import cfg, PANORAMA_FACES
@@ -26,6 +25,13 @@ def main():
         try:
             # Install/Verify player model to prevent player rendering
             install_player_model(cfg.GAME_ROOT, cfg.MOD_DIR)
+
+            if cfg.ENGINE_TYPE == "portal2":
+                from src.engine_control_portal2 import EngineController
+                logger.info("Loaded Portal 2 Engine Controller")
+            else:
+                from src.engine_control import EngineController
+                logger.info("Loaded HL2 Engine Controller")
 
             engine = EngineController()
             # 1. Render Phase
