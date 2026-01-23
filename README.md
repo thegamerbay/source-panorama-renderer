@@ -28,6 +28,8 @@ It automates the tedious process of:
 -   **Skip Rendering**: Support for `--stitch-only` to re-stitch existing frames without re-rendering.
 -   **Audio Support**: Automatically extracts and includes game audio.
 -   **Player Model Hiding**: Automatically replaces the player model with an unobtrusive "battery" model during rendering to prevent camera obstruction.
+-   **Multi-Game Support**: Works with Half-Life 2, Portal 2, and other Source Engine games.
+-   **Flexible Capture Modes**: Choose between high-quality "Sphere" mode (22 shots) or faster "Cube" mode (6 shots).
 
 ## 🛠️ Prerequisites
 
@@ -76,20 +78,24 @@ This project requires a **modified version of FFmpeg** powered by the [FFmpeg v3
     
     Open `.env` in a text editor and update the variables:
     ```ini
-    # Path to the game folder containing hl2.exe
-    GAME_ROOT=C:\Games\Steam\steamapps\common\Half-Life 2
+    # Path to your game folder (containing hl2.exe or portal2.exe)
+    GAME_ROOT=C:\Program Files (x86)\Steam\steamapps\common\Portal 2
+    ENGINE_TYPE=portal2
+    MOD_DIR=portal2
     
     # Name of the demo file inside the game folder (without .dem)
-    DEMO_FILE=my_epic_gameplay
+    DEMO_FILE=test1_3
     
-    # Resolution of ONE face (640 = 4K result, 1280 = 8K result)
-    CUBE_FACE_SIZE=640
-
-    # Camera Field of View (Matches the capture rig settings)
-    RIG_FOV=60.0
+    # Panorama Mode: 'sphere' (22-shot, 60 FOV) or 'cube' (6-shot, 90 FOV)
+    PANORAMA_MODE=cube
     
-    # Blending width for stitching (0.0 to 1.0)
-    BLEND_WIDTH=0.20
+    # Resolution of ONE face
+    # Sphere mode: 640 = 4K panorama, 1280 = 8K panorama
+    # Cube mode: 1024 = 4K panorama, 2048 = 8K panorama
+    CUBE_FACE_SIZE=1024
+    
+    # Path to FFmpeg executable
+    FFMPEG_BIN=D:\Games\FFmpeg-v360-advanced\ffmpeg.exe
     ```
 
 > [!WARNING]
@@ -126,27 +132,36 @@ python main.py --stitch-only
 ```
 
 ### The Process
-1.  **Render Phase**: The script will launch the game **22 times** (once for each angle).
+1.  **Render Phase**: The script will launch the game **multiple times** (once for each angle).
     *   **Automation**: The script injects keypresses (F8-F12) to control the game.
     *   **Automated Exit**: Monitors rendered frames for static content (menu) to determine when the demo ends.
     *   **Player Model Replacement**: Before rendering, the script automatically copies a custom `player.mdl` (battery model) to the game's `models/` directory to ensure the player's view is not obstructed by the default weapon or character model.
     *   *Do not interact with the computer while the game window is active*, as keyboard inputs are simulated.
-2.  **Stitch Phase**: FFmpeg processes all 22 input streams at once.
+2.  **Stitch Phase**: FFmpeg processes all input streams at once.
     *   This step uses your GPU (NVENC) for performance.
 3.  **Result**: The final video will be saved in the `output/` directory.
 
 ## 🔧 Technical Details
 
-The tool uses a **Spherical Rig** capture method instead of a simple Cubemap. This provides better quality and overlap for stitching.
+The tool supports two capture methods:
 
-**Capture Geometry (22 Angles):**
+### 1. Sphere Mode (Recommended for Quality)
+Uses a **Spherical Rig** with **22 angles** (FOV 60°) to ensure perfect coverage and overlap for high-quality stitching.
+
+**Geometry:**
 -   **Ring 0 (Equator)**: 8 shots at Pitch 0° (every 45°)
 -   **Ring 1 (Upper)**: 6 shots at Pitch +45° (every 60°)
 -   **Ring 2 (Lower)**: 6 shots at Pitch -45° (every 60°)
 -   **Zenith**: 1 shot at Pitch +90°
 -   **Nadir**: 1 shot at Pitch -90°
 
-It uses FFmpeg's `v360` filter with `input=tiles` (Rig Mode) to project these inputs into a single Equirectangular video stream.
+### 2. Cube Mode (Faster)
+Uses a standard **Cubic** layout with **6 angles** (FOV 90°). This is faster to render but may have less overlap for blending.
+
+**Geometry:**
+-   Front, Back, Left, Right, Up, Down (standard box mapping)
+
+Both modes use FFmpeg's `v360` filter with `input=tiles` (Rig Mode) to project these inputs into a single Equirectangular video stream.
 
 ## 📝 License
 
