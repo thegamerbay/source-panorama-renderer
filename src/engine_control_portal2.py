@@ -36,15 +36,17 @@ class EngineController:
             "demo_fov_override 0",
             "mat_vignette_enable 0",
             "c_thirdpersonshoulder 0",
+            "cl_clock_correction 0",
+            "mat_no_bonylighting 1",
 
             # Clear keys
             "unbind F9", "unbind F10", "unbind F11",
 
             # Binds
             f"bind \"F9\" \"sv_cheats 1; mat_vsync 0; fps_max 0; fov {REAL_FOV}; cl_fov {REAL_FOV}; thirdperson; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
-            f"bind \"F10\" \"demo_gototick 1; cam_idealdist 0; cam_idealdistright 0; cam_idealdistup 0; cam_collision 0; cam_ideallag 0; cam_snapto 1; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; demo_fov_override 0; demo_pause;\"",
+            f"bind \"F10\" \"demo_gototick 1; cam_idealdist 0; cam_idealdistright 0; cam_idealdistup 0; cam_collision 0; cam_ideallag 0; cam_snapto 1; c_thirdpersonshoulder 0; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; demo_fov_override 0; demo_pause;\"",
             f"bind \"F11\" \"fov {REAL_FOV}; cl_fov {REAL_FOV}; thirdperson_mayamode; host_framerate {cfg.FRAMERATE}; startmovie {face_name} tga wav; demo_quitafterplayback 1; demo_resume\"",
-            
+
             f"playdemo {cfg.DEMO_FILE}",
 
             # Crucial for saving state
