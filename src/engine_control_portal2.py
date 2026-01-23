@@ -38,15 +38,15 @@ class EngineController:
             "c_thirdpersonshoulder 0",
 
             # Clear keys
-            "unbind F8", "unbind F9", "unbind F10", "unbind F11", "unbind F12",
+            "unbind F9", "unbind F10", "unbind F11",
 
             # Binds
-            f"bind \"F8\" \"playdemo {cfg.DEMO_FILE}\"",
-            f"bind \"F9\" \"sv_cheats 1; mat_vsync 0; fps_max 0; fov {REAL_FOV}; cl_fov {REAL_FOV}; setmodel models/player.mdl; thirdperson; thirdperson_mayamode 1; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
-            f"bind \"F10\" \"demo_gototick 1; demo_pause; sv_cheats 1; fov {REAL_FOV}; cl_fov {REAL_FOV}; setmodel models/player.mdl; thirdperson; thirdperson_mayamode 1; c_thirdpersonshoulder 0; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180; cam_idealdist 0; cam_idealdistright 0; cam_idealdistup 0; cam_collision 0; cam_ideallag 0; cam_snapto 1; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; thirdperson; demo_fov_override 0\"",
-            f"bind \"F11\" \"fov {REAL_FOV}; cl_fov {REAL_FOV}; thirdperson_mayamode 1; host_framerate {cfg.FRAMERATE}; startmovie {face_name} tga wav; demo_resume\"",
-            "bind \"F12\" \"endmovie; quit\"",
+            f"bind \"F9\" \"sv_cheats 1; mat_vsync 0; fps_max 0; fov {REAL_FOV}; cl_fov {REAL_FOV}; thirdperson; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
+            f"bind \"F10\" \"demo_gototick 1; cam_idealdist 0; cam_idealdistright 0; cam_idealdistup 0; cam_collision 0; cam_ideallag 0; cam_snapto 1; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; demo_fov_override 0; demo_pause;\"",
+            f"bind \"F11\" \"fov {REAL_FOV}; cl_fov {REAL_FOV}; thirdperson_mayamode; host_framerate {cfg.FRAMERATE}; startmovie {face_name} tga wav; demo_quitafterplayback 1; demo_resume\"",
             
+            f"playdemo {cfg.DEMO_FILE}",
+
             # Crucial for saving state
             "host_writeconfig"
         ]
@@ -126,67 +126,21 @@ class EngineController:
             process = subprocess.Popen(cmd, cwd=cfg.GAME_ROOT)
             
             # Wait for load. 
-            # Portal 2 loads slowly, better give it a buffer.
-            time.sleep(30) 
-            
-            # Focus window (just in case, but we don't type text anymore)
-            logger.info("Clicking to focus window...")
-            time.sleep(1)
-
-            logger.info("Injecting F8 (Play Demo)...")
-            press_key(0x77) 
-            time.sleep(15)
-            
-            logger.info("Injecting F9 (Unlock & Model)...")
-            press_key(0x78)
-            time.sleep(1)
+            time.sleep(20) 
             
             logger.info("Injecting F10 (Set View)...")
             press_key(0x79)
             time.sleep(2)
+
+            logger.info("Injecting F9 (Unlock & Model)...")
+            press_key(0x78)
+            time.sleep(1)
             
             logger.info("Injecting F11 (Start Record)...")
             press_key(0x7A)
             
-            # --- MONITORING LOOP ---
-            monitor_paths = {cfg.GAME_ROOT / cfg.MOD_DIR, cfg.GAME_ROOT / "portal2"}
-            monitor_paths = [p for p in monitor_paths if p.exists()]
-            tga_pattern = f"{face_name}*.tga"
-            
-            last_hash = ""
-            stability_cycles = 0
-            
-            time.sleep(5)
-            
-            while True:
-                if process.poll() is not None:
-                    break
-                
-                try:
-                    all_files = []
-                    for p in monitor_paths:
-                        all_files.extend(p.glob(tga_pattern))
-                    all_files.sort(key=lambda x: x.stat().st_mtime)
-                    
-                    if len(all_files) >= 2:
-                        check_file = all_files[-2]
-                        from src.utils import get_file_md5
-                        current_hash = get_file_md5(check_file)
-                        
-                        if current_hash and current_hash == last_hash:
-                            stability_cycles += 1
-                        else:
-                            stability_cycles = 0
-                        last_hash = current_hash
-                    
-                    if stability_cycles >= 20: 
-                        logger.info("Menu detected. Finishing...")
-                        press_key(0x7B) # F12
-                        try: process.wait(timeout=10)
-                        except: process.terminate()
-                        break
-                except: pass
-                time.sleep(2.0)
+            logger.info("Waiting for game process to exit...")
+            process.wait()
             
             # Conversion logic (no changes)
             logger.info(f"Processing files for {face_name}...")
