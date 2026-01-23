@@ -30,8 +30,13 @@ class RenderConfig:
     TEMP_DIR: Path = Path("temp_render_files")
 
     # --- V360 EXTENDED SETTINGS ---
-    # FOV for the input camera (Now 60.0 for the new request)
-    RIG_FOV: float = float(os.getenv("RIG_FOV", "60.0"))
+    PANORAMA_MODE: str = os.getenv("PANORAMA_MODE", "sphere") # sphere, cube
+    
+    # FOV for the input camera
+    # If using cube mode, we generally want 90 FOV.
+    # If using sphere mode (22 shots), we want 60 FOV.
+    _default_fov = "90.0" if os.getenv("PANORAMA_MODE") == "cube" else "60.0"
+    RIG_FOV: float = float(os.getenv("RIG_FOV", _default_fov))
     
     # Blend width needs to be sufficient for the overlap
     BLEND_WIDTH: float = float(os.getenv("BLEND_WIDTH", "0.20"))
@@ -50,36 +55,49 @@ class RenderConfig:
 cfg = RenderConfig()
 
 # --- ANGLES GENERATION ---
-# We need to cover the sphere with a 60 degree FOV camera.
-# Optimal robust layout: 
-# - Equator (Pitch 0): 8 shots (45 deg step)
-# - Mid-Latitudes (Pitch +/- 45): 6 shots each (60 deg step)
-# - Poles (Pitch +/- 90): 1 shot each
-# Total: 22 shots
-
 PANORAMA_FACES = {}
 
-# 1. Equator Ring (8 shots)
-for i in range(8):
-    yaw = i * 45
-    name = f"row0_yaw{yaw}"
-    PANORAMA_FACES[name] = (0, yaw, 0) # Pitch, Yaw, Roll
+if cfg.PANORAMA_MODE == "cube":
+    # Cubic 6-shot layout (FOV 90)
+    # Standard cube faces: Front, Right, Back, Left, Up, Down
+    # Pitch: Positive=Up, Negative=Down (in this config logic)
+    # Yaw: 0=Front, 90=Right, 180=Back, 270=Left
+    
+    PANORAMA_FACES["front"] = (0, 0, 0)
+    PANORAMA_FACES["right"] = (0, 90, 0)
+    PANORAMA_FACES["back"]  = (0, 180, 0)
+    PANORAMA_FACES["left"]  = (0, 270, 0)
+    PANORAMA_FACES["up"]    = (90, 0, 0)
+    PANORAMA_FACES["down"]  = (-90, 0, 0)
 
-# 2. Upper Ring (Pitch 45, 6 shots)
-for i in range(6):
-    yaw = i * 60
-    name = f"rowUp_yaw{yaw}"
-    PANORAMA_FACES[name] = (45, yaw, 0)
+else:
+    # default to "sphere" - 22 shots, 60 FOV
+    # Optimal robust layout: 
+    # - Equator (Pitch 0): 8 shots (45 deg step)
+    # - Mid-Latitudes (Pitch +/- 45): 6 shots each (60 deg step)
+    # - Poles (Pitch +/- 90): 1 shot each
+    
+    # 1. Equator Ring (8 shots)
+    for i in range(8):
+        yaw = i * 45
+        name = f"row0_yaw{yaw}"
+        PANORAMA_FACES[name] = (0, yaw, 0) # Pitch, Yaw, Roll
 
-# 3. Lower Ring (Pitch -45, 6 shots)
-for i in range(6):
-    yaw = i * 60
-    name = f"rowDown_yaw{yaw}"
-    PANORAMA_FACES[name] = (-45, yaw, 0)
+    # 2. Upper Ring (Pitch 45, 6 shots)
+    for i in range(6):
+        yaw = i * 60
+        name = f"rowUp_yaw{yaw}"
+        PANORAMA_FACES[name] = (45, yaw, 0)
 
-# 4. Caps
-PANORAMA_FACES["cap_up"] = (90, 0, 0)
-PANORAMA_FACES["cap_down"] = (-90, 0, 0)
+    # 3. Lower Ring (Pitch -45, 6 shots)
+    for i in range(6):
+        yaw = i * 60
+        name = f"rowDown_yaw{yaw}"
+        PANORAMA_FACES[name] = (-45, yaw, 0)
+
+    # 4. Caps
+    PANORAMA_FACES["cap_up"] = (90, 0, 0)
+    PANORAMA_FACES["cap_down"] = (-90, 0, 0)
 
 def get_v360_angle(source_pitch, source_yaw):
     """
