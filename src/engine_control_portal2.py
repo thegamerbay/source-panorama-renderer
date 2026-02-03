@@ -42,7 +42,28 @@ class EngineController:
             "mat_vignette_enable 0",
             "c_thirdpersonshoulder 0",
             "cl_clock_correction 0",
-            "mat_no_bonylighting 1",
+            "mat_no_bonylighting 0",
+
+            # --- Maximum Graphics Settings ---
+            "mat_picmip -1",  # Texture Quality: Very High
+            "mat_forceaniso 16",  # Anisotropic Filtering: 16x
+            "mat_antialias 8",  # Anti-aliasing (MSAA): 8x
+            "mat_aaquality 0",  # Anti-aliasing Quality
+            "mat_reducefillrate 0",  # Shader Detail: High
+            "r_shadowrendertotexture 1",  # Shadow Detail: High
+            "r_shadowmaxrendered 128",  # Max Rendered Shadows
+            "r_waterforceexpensive 1",  # Water Detail: High
+            "r_waterforcereflectentities 1",  # Water Reflections: Reflect All
+            "r_rootlod 0",  # Model Detail: High
+            "mat_hdr_level 2",  # Full HDR
+            "mat_specular 1",  # Enable Specular Highlights
+            "mat_bumpmap 1",  # Enable Bump Mapping
+            "mat_parallaxmap 1",  # Enable Parallax Mapping
+            "r_flashlightdepthtexture 1",  # High Quality Shadows from Flashlight/Light
+            "r_avglight 3",  # Average Light Quality
+            "r_decals 2048",  # Max Decals
+            "r_maxmodeldecal 100",  # Max Decals on Models
+            # --------------------------------------
 
             # Clear keys
             "unbind F9", "unbind F10", "unbind F11",
