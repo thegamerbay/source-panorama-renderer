@@ -1,9 +1,9 @@
 # 🎮 Source Engine Panorama Renderer
 
-Convert Half-Life 2 (and other Source) demos into immersive 8K 360° videos.
+A powerful, fully automated pipeline for preserving your favorite Source Engine moments in Virtual Reality. This tool captures game demos from titles like **Half-Life 2** and **Portal 2**, rendering them into **high-fidelity 8K 360° panoramic videos** suitable for VR headsets and YouTube VR. By leveraging custom FFmpeg filters and automated engine control, it seamlessly stitches multiple view angles into a perfect immersive experience.
 
 > [!NOTE]
-> **Status**: Beta. Development and debugging are in progress. Currently using Half-Life 2.
+> **Status**: Beta. Development and debugging are in progress. Primary support for Half-Life 2 and Portal 2.
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python)
 ![FFmpeg](https://img.shields.io/badge/FFmpeg-Required-green?style=for-the-badge&logo=ffmpeg)
@@ -18,11 +18,21 @@ It automates the tedious process of:
 2.  Stitching those angles into a perfect Equirectangular generic projection using FFmpeg with advanced blending.
 3.  Producing a YouTube-ready 360° video file.
 
+
+## 🎞️ Examples
+
+### Half-Life 2 RTX
+![Half-Life 2 RTX Animation](assets/hl2rtx-example.gif)
+
+### Portal 2
+![Portal 2 Animation](assets/portal2-example.gif)
+
 ## 🚀 Features
 
 -   **Fully Automated**: Handles game launching, recording, and *exit* automatically. No manual intervention required.
 -   **Robust 22-Angle Capture**: Uses a spherical rig layout (Equator, Upper/Lower Rings, Caps) to eliminate distortion and gaps.
 -   **Smart Monitoring**: Detects when the demo finishes by analyzing the rendered frames for static content (e.g., game menu).
+-   **Smart Compression**: Automatically converts raw TGA screenshots to high-quality JPEGs on the fly, significantly reducing disk space requirements during large renders.
 -   **High Resolution**: Supports 8K output.
 -   **Hardware Acceleration**: Uses NVIDIA `hevc_nvenc` for lightning-fast stitching on RTX cards.
 -   **Skip Rendering**: Support for `--stitch-only` to re-stitch existing frames without re-rendering.
@@ -71,9 +81,21 @@ This project requires a **modified version of FFmpeg** powered by the [FFmpeg v3
     ```
 
 3.  **Setup Configuration**:
-    Copy the example environment file and configure your paths.
+    Copy the example environment file for your game and configure your paths.
+
+    For **Half-Life 2**:
     ```bash
-    cp .env.example .env
+    cp .env.hl2.example .env
+    ```
+
+    For **Half-Life 2 RTX**:
+    ```bash
+    cp .env.hl2rtx.example .env
+    ```
+
+    For **Portal 2**:
+    ```bash
+    cp .env.portal2.example .env
     ```
     
     Open `.env` in a text editor and update the variables:
