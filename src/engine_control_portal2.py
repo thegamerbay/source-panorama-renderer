@@ -2,7 +2,6 @@ import math
 import subprocess
 import time
 import shutil
-from pathlib import Path
 from config import cfg, PANORAMA_FACES
 from src.utils import logger
 from src.window_input import press_key
@@ -23,11 +22,10 @@ class EngineController:
     def _get_render_commands(self, face_name: str, angles: tuple) -> str:
         """Generates the content for the render config."""
         pitch, yaw, roll = angles
-        REAL_FOV = cfg.RIG_FOV
         target_fov = cfg.RIG_FOV
         rad_fov = math.radians(target_fov)
         source_val = 2 * math.atan(math.tan(rad_fov / 2) * (4 / 3))
-        REAL_FOV = math.degrees(source_val)
+        real_fov = math.degrees(source_val)
         
         logger.info(f"Generating config content for {face_name}")
         logger.info(f"Using DEMO_FILE: {cfg.DEMO_FILE}")
@@ -59,7 +57,7 @@ class EngineController:
             "mat_specular 1",  # Enable Specular Highlights
             "mat_bumpmap 1",  # Enable Bump Mapping
             "mat_parallaxmap 1",  # Enable Parallax Mapping
-            "r_flashlightdepthtexture 1",  # High Quality Shadows from Flashlight/Light
+            "r_flashlightdepthtexture 1",  # High-Quality Shadows from Flashlight/Light
             "r_avglight 3",  # Average Light Quality
             "r_decals 2048",  # Max Decals
             "r_maxmodeldecal 100",  # Max Decals on Models
@@ -69,13 +67,13 @@ class EngineController:
             "unbind F9", "unbind F10", "unbind F11",
 
             # Binds
-            f"bind \"F9\" \"sv_cheats 1; mat_vsync 0; fps_max 0; fov {REAL_FOV}; cl_fov {REAL_FOV}; thirdperson; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
+            f"bind \"F9\" \"sv_cheats 1; mat_vsync 0; fps_max 0; fov {real_fov}; cl_fov {real_fov}; thirdperson; c_mindistance -100; c_minyaw -360; c_maxyaw 360; c_minpitch -180; c_maxpitch 180\"",
             f"bind \"F10\" \"demo_gototick 100; cam_idealdist 0; cam_idealdistright 0; cam_idealdistup 0; cam_collision 0; cam_ideallag 0; cam_snapto 1; c_thirdpersonshoulder 0; cam_idealpitch {-pitch}; cam_idealyaw {yaw}; demo_fov_override 0; demo_pause;\"",
-            f"bind \"F11\" \"fov {REAL_FOV}; cl_fov {REAL_FOV}; thirdperson_mayamode; host_framerate {cfg.FRAMERATE}; startmovie {face_name} tga wav; demo_quitafterplayback 1; demo_resume\"",
+            f"bind \"F11\" \"fov {real_fov}; cl_fov {real_fov}; thirdperson_mayamode; host_framerate {cfg.FRAMERATE}; startmovie {face_name} tga wav; demo_quitafterplayback 1; demo_resume\"",
 
             f"playdemo {cfg.DEMO_FILE}",
 
-            # Crucial for saving state
+            # Crucial for saving the state
             "host_writeconfig"
         ]
         
